@@ -1,0 +1,1087 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Cosmic Snake - Base MiniApp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="mini-app" content="Cosmic Snake">
+  <meta name="blockchain" content="base">
+  <meta name="category" content="gaming">
+  <meta name="web3-enabled" content="true">
+  <meta name="onchain-features" content="minting,leaderboard">
+  <meta name="base-app" content="true">
+  <meta name="base-chain-id" content="8453">
+  <!-- 🔥 NOVO: Meta tag para embeds do MiniApp -->
+  <meta name="fc:miniapp" content='{
+    "version":"next",
+    "imageUrl":"https://cosmicsnakeminiapp.netlify.app/icon-512.png",
+    "button":{
+      "title":"Play Now",
+      "action":{
+        "type":"launch_miniapp",
+        "name":"Cosmic Snake",
+        "url":"https://cosmicsnakeminiapp.netlify.app"
+      }
+    }
+  }' />
+
+  <!-- 🔥 NOVO: SDK DO FARCASTER -->
+<script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@latest/dist/index.umd.js"></script>
+
+
+ <style>
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); 
+      color: white; 
+      min-height: 100vh; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      padding: 15px; 
+      touch-action: manipulation;
+    }
+    
+    .container { 
+      text-align: center; 
+      background: rgba(255, 255, 255, 0.08); 
+      backdrop-filter: blur(20px); 
+      border-radius: 24px; 
+      padding: 20px 15px; 
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); 
+      border: 1px solid rgba(255, 255, 255, 0.15); 
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+    }
+    
+    h1 { 
+      font-size: 2.2rem; 
+      margin-bottom: 15px; 
+      background: linear-gradient(45deg, #7efb8a, #baffc9); 
+      -webkit-background-clip: text; 
+      background-clip: text; 
+      -webkit-text-fill-color: transparent; 
+      text-shadow: 0 4px 20px rgba(126, 251, 138, 0.4); 
+    }
+    
+    .header-buttons {
+      position: absolute;
+      top: 12px;
+      right: 15px;
+      z-index: 1000;
+      display: none;
+    }
+    
+    .wallet-btn {
+      background: linear-gradient(45deg, #ffd700, #ffed4e);
+      color: #000814;
+      border: none;
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border-radius: 18px;
+      box-shadow: 0 3px 12px rgba(255, 215, 0, 0.4);
+      white-space: nowrap;
+    }
+    
+    canvas { 
+      border: 3px solid #7efb8a; 
+      border-radius: 16px; 
+      background: #000814; 
+      box-shadow: 0 6px 25px rgba(126, 251, 138, 0.3); 
+      margin: 12px auto; 
+      display: block; 
+      width: 100%;
+      max-width: 360px;
+      height: auto;
+      aspect-ratio: 1 / 1;
+    }
+    
+    .info { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin: 15px 0; 
+      padding: 12px 15px; 
+      background: rgba(0, 8, 20, 0.7); 
+      border-radius: 16px; 
+      border: 1px solid #7efb8a; 
+      font-size: 0.9rem;
+    }
+    
+    #score { 
+      font-size: 1.1rem; 
+      font-weight: 700; 
+      color: #baffc9; 
+    }
+    
+    button { 
+      background: linear-gradient(45deg, #7efb8a, #baffc9); 
+      color: #000814; 
+      border: none; 
+      padding: 16px 24px; 
+      font-size: 1.1rem; 
+      font-weight: 700; 
+      border-radius: 20px; 
+      box-shadow: 0 4px 15px rgba(126, 251, 138, 0.4); 
+      margin: 8px;
+      min-height: 55px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 90%;
+      max-width: 280px;
+      touch-action: manipulation;
+    }
+    
+    button:active { 
+      transform: scale(0.95); 
+    }
+    
+    .screen { 
+      text-align: center; 
+      background: rgba(0, 8, 20, 0.95); 
+      border: 2px solid #7efb8a; 
+      border-radius: 20px; 
+      padding: 30px 20px; 
+      color: white; 
+      margin: 15px 0; 
+      box-shadow: 0 10px 35px rgba(126, 251, 138, 0.25); 
+      width: 100%;
+    }
+    
+    .screen h2 { 
+      font-size: 1.8rem; 
+      margin-bottom: 20px; 
+      color: #baffc9; 
+    }
+    
+    .screen p { 
+      font-size: 1.1rem; 
+      margin: 12px 0; 
+      color: #7efb8a; 
+    }
+    
+    .screen small { 
+      display: block; 
+      margin-top: 20px; 
+      color: #ccc; 
+      font-size: 0.85rem; 
+    }
+    
+    .mobile-controls {
+        display: block;
+        margin-top: 20px;
+        padding: 20px 15px;
+    }
+    
+    .d-pad {
+        display: grid;
+        grid-template-areas: 
+            ". up ."
+            "left . right"
+            ". down .";
+        grid-template-columns: 55px 55px 55px;
+        grid-template-rows: 55px 55px 55px;
+        gap: 5px;
+        justify-content: center;
+        align-items: center;
+        width: 180px;
+        margin: 0 auto;
+    }
+    
+    .control-btn {
+        width: 55px;
+        height: 55px;
+        background: linear-gradient(45deg, #7efb8a, #baffc9);
+        border: 3px solid #baffc9;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        box-shadow: 0 4px 15px rgba(126, 251, 138, 0.4);
+        touch-action: manipulation;
+        margin: 0;
+    }
+    
+    .btn-up { grid-area: up; justify-self: center; align-self: end; }
+    .btn-left { grid-area: left; justify-self: end; align-self: center; }
+    .btn-right { grid-area: right; justify-self: start; align-self: center; }
+    .btn-down { grid-area: down; justify-self: center; align-self: start; }
+    
+    .control-btn:active {
+        background: linear-gradient(45deg, #baffc9, #daffda);
+        transform: scale(0.85);
+    }
+    
+    #playerName { 
+      padding: 16px 20px; 
+      border: 2px solid #7efb8a; 
+      border-radius: 16px; 
+      background: rgba(0, 8, 20, 0.9); 
+      color: white; 
+      margin: 15px 0; 
+      font-size: 1.1rem; 
+      width: 90%; 
+      max-width: 280px; 
+      text-align: center; 
+    }
+    
+    #scoresList { 
+        max-height: 50vh; 
+        overflow-y: auto; 
+        margin: 20px 0; 
+        padding: 12px 8px; 
+        background: rgba(0, 8, 20, 0.7); 
+        border-radius: 16px; 
+        border: 1px solid #7efb8a; 
+        scrollbar-width: thin;
+        scrollbar-color: #7efb8a rgba(0, 8, 20, 0.9);
+    }
+    
+    #scoresList::-webkit-scrollbar { width: 6px; }
+    #scoresList::-webkit-scrollbar-track { background: rgba(0, 8, 20, 0.9); border-radius: 10px; }
+    #scoresList::-webkit-scrollbar-thumb { background: #7efb8a; border-radius: 10px; }
+    
+    .score-entry { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        padding: 14px 10px; 
+        margin: 6px 0; 
+        background: rgba(126, 251, 138, 0.08); 
+        border-radius: 12px; 
+        border: 1px solid rgba(126, 251, 138, 0.2); 
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+    }
+    
+    .score-entry:active { background: rgba(126, 251, 138, 0.15); transform: scale(0.98); }
+    .current-score { background: rgba(126, 251, 138, 0.2) !important; border: 2px solid #7efb8a !important; box-shadow: 0 0 12px rgba(126, 251, 138, 0.3); }
+    .rank { font-weight: bold; color: #baffc9; min-width: 40px; font-size: 1rem; text-align: center; }
+    .player-info { flex: 1; margin: 0 12px; display: flex; flex-direction: column; gap: 2px; }
+    .player-name { font-weight: 600; color: white; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; }
+    .nft-badge { background: linear-gradient(45deg, #ffd700, #ffed4e); color: #000814; padding: 2px 6px; border-radius: 8px; font-size: 0.65rem; font-weight: bold; }
+    .score { font-weight: bold; color: #ff4d4d; min-width: 50px; text-align: center; font-size: 1.1rem; text-shadow: 0 0 8px rgba(255, 77, 77, 0.3); }
+    .date { font-size: 0.75rem; color: #ccc; min-width: 60px; text-align: right; line-height: 1.2; }
+    .empty-leaderboard { text-align: center; color: #7efb8a; font-style: italic; padding: 50px 20px; font-size: 1rem; line-height: 1.4; }
+    .loading-leaderboard { text-align: center; color: #baffc9; padding: 50px 20px; font-size: 1rem; }
+    .error-leaderboard { text-align: center; color: #ff6b6b; padding: 50px 20px; font-size: 1rem; line-height: 1.4; }
+    .mint-btn { background: linear-gradient(45deg, #ffd700, #ffed4e) !important; color: #000814 !important; font-weight: bold !important; border: 2px solid #ffd700 !important; }
+    .mint-btn:active { transform: scale(0.95) !important; background: linear-gradient(45deg, #ffed4e, #fff8b3) !important; }
+    .score-display { font-size: 1.6rem; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+    .death-preview { animation: fadeInUp 0.6s ease-out; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header-buttons">
+      <button id="connectWalletBtn" class="wallet-btn">🔗 Connect Wallet</button>
+    </div>
+    
+    <h1>🐍 Cosmic Snake</h1>
+    
+    <div id="startScreen" class="screen">
+  <h2>🚀 Ready for Adventure?</h2>
+  <p>Control the cosmic snake through space!</p>
+  <button id="startBtn">START GAME</button>
+  <button id="leaderboardBtn">🏆 LEADERBOARD</button>
+  <button id="rulesBtn">📖 GAME RULES</button>
+</div>
+
+    <canvas id="game"></canvas>
+    
+    <div class="info">
+      <span id="score">Score: 0</span>
+      <button id="restart">🔄 Restart</button>
+    </div>
+    <div class="mobile-controls">
+        <div class="d-pad">
+            <button class="control-btn btn-up">⬆️</button>
+            <button class="control-btn btn-left">⬅️</button>
+            <button class="control-btn btn-right">➡️</button>
+            <button class="control-btn btn-down">⬇️</button>
+        </div>
+    </div>
+    <div id="gameOverScreen" class="screen" style="display: none;"></div>
+
+    <div id="leaderboardScreen" class="screen" style="display: none;">
+      <h2>🏆 Leaderboard</h2>
+      <div id="scoresList"></div>
+      <button id="backToMenuBtn">⬅️ Back to Menu</button>
+    </div>
+
+    <div id="rulesScreen" class="screen" style="display: none;">
+  <h2>📖 Game Rules</h2>
+  <div style="text-align: left; max-width: 400px; margin: 0 auto 25px auto;">
+    <div style="margin: 15px 0; padding: 15px; background: rgba(126, 251, 138, 0.08); border-radius: 16px;">
+      <strong style="color: #baffc9;">🎮 CONTROLS</strong><br>
+      <span style="color: #7efb8a;">D-Pad buttons </span>
+    </div>
+    <div style="margin: 15px 0; padding: 15px; background: rgba(126, 251, 138, 0.08); border-radius: 16px;">
+      <strong style="color: #baffc9;">🍎 OBJECTIVE</strong><br>
+      <span style="color: #7efb8a;">Eat red food to grow longer</span>
+    </div>
+    <div style="margin: 15px 0; padding: 15px; background: rgba(255, 215, 0, 0.1); border-radius: 16px;">
+      <strong style="color: #baffc9;">💎 ON-CHAIN GLORY</strong><br>
+      <span style="color: #7efb8a;">Mint your score as NFT to appear on leaderboard!</span>
+    </div>
+  </div>
+  <button id="backFromRules">⬅️ Back to Menu</button>
+</div>
+ <script>
+    // Detectar se está no ambiente Base
+    if (window.ethereum?.isBaseApp) {
+      console.log('🚀 Running in Base MiniApp!');
+      document.querySelector('.header-buttons').style.display = 'block';
+    }
+  </script>
+  <script>
+// 🔥 CONFIGURAÇÃO PRINCIPAL
+const GRID = 20;
+let COLS, ROWS;
+let snake, food, score, tickInterval, currentPlayerName;
+let pendingDirection = null; // 🔥 NOVO: Buffer de direção
+let directionChanged = false; // 🔥 NOVO: Flag de mudança
+const CONTRACT_ADDRESS = "0xD48cf27b74849d16E689BF3E9Be38A352b51d0C9";
+
+// 🎮 CONTROLES MOBILE
+function moveUp() { setDirection(0, -1); }
+function moveLeft() { setDirection(-1, 0); }
+function moveRight() { setDirection(1, 0); }
+function moveDown() { setDirection(0, 1); }
+
+function setDirection(x, y) {
+    console.log('🎮 Tentando mudar direção para:', { x, y });
+    console.log('🎮 Direção atual:', window.dir);
+    console.log('🎮 Já mudou neste tick?', directionChanged);
+    
+    // 🔥 CORREÇÃO: Só permite UMA mudança de direção por tick
+    if (directionChanged) {
+        console.log('⚠️ Já mudou direção neste tick - ignorando');
+        pendingDirection = { x, y }; // Guarda pra próximo tick
+        return;
+    }
+    
+    // 🔥 CORREÇÃO: Verifica se não tá tentando voltar sobre si mesma
+    const isOpposite = (window.dir.x === -x && window.dir.y === -y);
+    if (isOpposite) {
+        console.log('❌ Direção oposta bloqueada - não pode fazer volta em U');
+        return;
+    }
+    
+    // 🔥 CORREÇÃO: Verifica se já não tá indo nessa direção
+    if (window.dir.x === x && window.dir.y === y) {
+        console.log('➡️ Já está indo nessa direção');
+        return;
+    }
+    
+    console.log('✅ Mudança de direção aceita!');
+    window.dir = { x, y };
+    directionChanged = true; // Marca que mudou
+    pendingDirection = null;
+    if (window.soundManager) window.soundManager.move();
+}
+
+// 🎯 GERENCIAMENTO DE TELAS
+function showScreen(screenName) {
+    document.querySelectorAll('.screen, canvas, .info, .mobile-controls').forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    switch(screenName) {
+        case 'start': document.getElementById('startScreen').style.display = 'block'; break;
+        case 'game': 
+            document.getElementById('game').style.display = 'block';
+            document.querySelector('.info').style.display = 'flex';
+            document.querySelector('.mobile-controls').style.display = 'block';
+            break;
+        case 'gameOver': document.getElementById('gameOverScreen').style.display = 'block'; break;
+        case 'leaderboard': document.getElementById('leaderboardScreen').style.display = 'block'; break;
+        case 'rules': document.getElementById('rulesScreen').style.display = 'block'; break;
+    }
+}
+
+// 🎯 FUNÇÕES DO JOGO
+function initGame() {
+    adjustCanvasSize();
+    snake = [{ x: Math.floor(COLS/2), y: Math.floor(ROWS/2) }];
+    window.dir = { x: 1, y: 0 };
+    pendingDirection = null; // 🔥 NOVO: Reseta direção pendente
+    directionChanged = false; // 🔥 NOVO: Reseta flag
+    food = randomFood();
+    window.running = true;
+    score = 0;
+    document.getElementById('score').innerText = `Score: ${score}`;
+    tickInterval = 120;
+    showScreen('game');
+    if (window.soundManager) window.soundManager.start();
+    draw();
+    startLoop();
+}
+
+function adjustCanvasSize() {
+    const container = document.querySelector('.container');
+    const canvas = document.getElementById('game');
+    const canvasSize = Math.min(container.clientWidth * 0.85, 360);
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
+    COLS = Math.floor(canvasSize / GRID);
+    ROWS = Math.floor(canvasSize / GRID);
+}
+
+function randomFood() {
+    while (true) {
+        const f = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
+        if (!snake.some(s => s.x === f.x && s.y === f.y)) return f;
+    }
+}
+
+function draw() {
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#000814';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ff4d4d';
+    ctx.fillRect(food.x * GRID + 1, food.y * GRID + 1, GRID - 2, GRID - 2);
+    for (let i = 0; i < snake.length; i++) {
+        const s = snake[i];
+        ctx.fillStyle = i === 0 ? '#baffc9' : '#7efb8a';
+        ctx.fillRect(s.x * GRID + 1, s.y * GRID + 1, GRID - 2, GRID - 2);
+    }
+}
+
+async function gameStep() {
+    if (!window.running) return;
+    
+    console.log('🔍 === VERIFICANDO MOVIMENTO ===');
+    console.log('🐍 Cabeça atual:', snake[0]);
+    console.log('🎯 Direção:', window.dir);
+    console.log('📏 Tamanho da cobra:', snake.length);
+    console.log('📋 Snake COMPLETA:', snake.map((s, i) => `${i === 0 ? 'H' : 'B'}(${s.x},${s.y})`).join(' → '));
+    
+    // 🔥 CORREÇÃO: Calcula nova cabeça COM A DIREÇÃO ATUAL (sem aplicar pendente ainda)
+    const head = { 
+        x: (snake[0].x + window.dir.x + COLS) % COLS, 
+        y: (snake[0].y + window.dir.y + ROWS) % ROWS 
+    };
+    
+    console.log('🆕 Nova cabeça calculada:', head);
+    
+    // Verifica se comeu ANTES da colisão
+    const ateFood = (head.x === food.x && head.y === food.y);
+    console.log('🍎 Vai comer comida?', ateFood);
+    
+    // Verifica colisão considerando que a cauda vai sair (se não comeu)
+    const endIndex = ateFood ? snake.length : snake.length - 1;
+    console.log('🔎 Verificando colisão até índice:', endIndex);
+    
+    for (let i = 1; i < endIndex; i++) {
+        console.log(`   🔎 Verificando corpo[${i}]:`, snake[i], '→ Colisão:', snake[i].x === head.x && snake[i].y === head.y);
+        if (snake[i].x === head.x && snake[i].y === head.y) {
+            console.log('💥 COLISÃO DETECTADA!');
+            console.log('❌ Colidiu com corpo[' + i + ']:', snake[i]);
+            console.log('🐍 Snake no momento da colisão:', snake.map((s, idx) => `${idx === 0 ? 'H' : 'B'}(${s.x},${s.y})`).join(' → '));
+            
+            const deathScreenshot = await captureDeathMoment();
+            window.running = false;
+            showGameOver(deathScreenshot);
+            return;
+        }
+    }
+    
+    console.log('✅ Nenhuma colisão detectada - movimento OK');
+    
+    // Move a cobra
+    snake.unshift(head);
+    
+    if (ateFood) {
+        score++;
+        document.getElementById('score').innerText = `Score: ${score}`;
+        if (window.soundManager) window.soundManager.eat();
+        food = randomFood();
+        if (score % 5 === 0 && tickInterval > 60) {
+            tickInterval -= 10;
+            startLoop();
+            if (window.soundManager) window.soundManager.levelUp();
+        }
+    } else {
+        snake.pop();
+    }
+    
+    console.log('🏁 Snake APÓS movimento:', snake.map((s, i) => `${i === 0 ? 'H' : 'B'}(${s.x},${s.y})`).join(' → '));
+    
+    // 🔥 CORREÇÃO CRÍTICA: Aplica direção pendente DEPOIS do movimento
+    // Agora o corpo já está na posição correta para o próximo tick
+    if (pendingDirection) {
+        console.log('⏭️ Aplicando direção pendente para PRÓXIMO tick:', pendingDirection);
+        const isOpposite = (window.dir.x === -pendingDirection.x && window.dir.y === -pendingDirection.y);
+        if (!isOpposite) {
+            window.dir = pendingDirection;
+            console.log('✅ Direção pendente aplicada para próximo movimento!');
+        } else {
+            console.log('❌ Direção pendente é oposta - ignorando');
+        }
+        pendingDirection = null;
+    }
+    
+    // 🔥 CORREÇÃO: Reseta flag DEPOIS de aplicar pendente
+    directionChanged = false;
+    
+    console.log('==========================================\n');
+    
+    draw();
+}
+
+let gameLoop;
+function startLoop() {
+    if (gameLoop) clearInterval(gameLoop);
+    gameLoop = setInterval(gameStep, tickInterval);
+}
+
+// 📸 CAPTURA DE TELA
+async function captureDeathMoment() {
+    try {
+        const canvas = document.getElementById('game');
+        if (!canvas) return null;
+        
+        const isBaseApp = /BaseApp|Wallet/i.test(navigator.userAgent) || window.ethereum?.isBaseApp;
+        let screenshot = null;
+        
+        if (isBaseApp) {
+            screenshot = await captureForBaseApp(canvas);
+        } else {
+            screenshot = await captureStandard(canvas);
+        }
+        
+        return screenshot && screenshot.length > 1000 ? screenshot : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+async function captureForBaseApp(canvas) {
+    try {
+        const dataURL = canvas.toDataURL('image/png');
+        if (dataURL && dataURL.length > 1000) return dataURL;
+    } catch (e) {}
+    return createTextScreenshot();
+}
+
+async function captureStandard(canvas) {
+    const formats = [
+        { type: 'image/png' },
+        { type: 'image/jpeg', quality: 0.9 },
+        { type: 'image/jpeg', quality: 0.7 }
+    ];
+    for (const format of formats) {
+        try {
+            const screenshot = format.quality ? 
+                canvas.toDataURL(format.type, format.quality) : 
+                canvas.toDataURL(format.type);
+            if (screenshot && screenshot.length > 1000) return screenshot;
+        } catch (e) {}
+    }
+    return null;
+}
+
+function createTextScreenshot() {
+    const gameState = { score, snakeLength: snake.length, timestamp: Date.now() };
+    const base64State = btoa(unescape(encodeURIComponent(JSON.stringify(gameState))));
+    return `data:application/json;base64,${base64State}`;
+}
+
+// 🎮 TELA DE GAME OVER
+function showGameOver(deathScreenshot) {
+    if (deathScreenshot) window.lastDeathScreenshot = deathScreenshot;
+    showMintScreen(deathScreenshot);
+    if (window.soundManager) window.soundManager.gameOver();
+}
+
+function showMintScreen(deathScreenshot) {
+    const hasValidScreenshot = deathScreenshot && deathScreenshot.length > 1000;
+    const isFallbackScreenshot = deathScreenshot?.includes('application/json');
+    
+    let screenshotPreview;
+    if (isFallbackScreenshot) {
+        screenshotPreview = `<div style="text-align: center; margin: 20px 0; padding: 20px; background: rgba(255, 215, 0, 0.1); border-radius: 16px; border: 2px solid #ffd700;">
+            <div style="font-size: 3rem; margin-bottom: 15px;">🎮</div>
+            <div style="color: #ffd700; font-weight: bold; margin-bottom: 10px; font-size: 1.1rem;">BaseApp Security Restriction</div>
+            <div style="color: #baffc9; font-size: 0.9rem;">Screenshots disabled in wallet browsers</div>
+        </div>`;
+    } else if (hasValidScreenshot) {
+        screenshotPreview = `<div style="text-align: center; margin: 20px 0; padding: 15px; background: rgba(126, 251, 138, 0.1); border-radius: 16px; border: 2px solid #7efb8a;">
+            <div style="color: #baffc9; font-weight: bold; margin-bottom: 12px; font-size: 1.1rem;">📸 Your Epic Death Moment!</div>
+            <img src="${deathScreenshot}" alt="Your death moment" style="max-width: 100%; max-height: 200px; border-radius: 12px; border: 2px solid #ff4d4d; margin: 10px 0;">
+            <div style="color: #ffd700; font-size: 0.9rem; margin-top: 10px;">🚀 Mint to preserve this moment for eternity!</div>
+        </div>`;
+    } else {
+        screenshotPreview = `<div style="color: #ffd700; padding: 15px; background: rgba(255,215,0,0.1); border-radius: 12px; margin: 15px 0;">
+            📸 <strong>No death moment captured</strong>
+        </div>`;
+    }
+    
+    document.getElementById('gameOverScreen').innerHTML = `
+        <div style="text-align: center;">
+            <h2>🎮 Game Over!</h2>
+            <p class="score-display">✨ Final Score: ${score} ✨</p>
+            ${screenshotPreview}
+            <div style="margin: 20px 0;">
+                <input type="text" id="playerName" placeholder="Enter your legendary name" maxlength="20" 
+                       style="padding: 16px 20px; border: 2px solid #7efb8a; border-radius: 16px; 
+                              background: rgba(0, 8, 20, 0.9); color: white; font-size: 1.1rem;
+                              width: 90%; max-width: 280px; text-align: center;">
+            </div>
+            <div style="margin: 20px 0; padding: 20px; background: rgba(255, 215, 0, 0.15); border-radius: 16px; border: 2px solid #ffd700;">
+                <div style="color: #ffd700; margin-bottom: 15px; font-size: 1.1rem;">💎 Immortalize Your Achievement!</div>
+                <button id="mintScoreBtn" class="mint-btn">🪙 Mint Score NFT (0.0002 ETH)</button>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center; margin: 15px 0;">
+                <button id="playAgainFromScore">🎮 Play Again</button>
+                <button id="backToMenuFromScore">⬅️ Menu</button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('mintScoreBtn').onclick = () => {
+        const name = document.getElementById('playerName').value || 'Anonymous';
+        if (!name.trim()) return alert('Enter your legendary name to mint!');
+        currentPlayerName = name;
+        mintScoreNFT();
+    };
+    document.getElementById('playAgainFromScore').onclick = initGame;
+    document.getElementById('backToMenuFromScore').onclick = () => showScreen('start');
+    showScreen('gameOver');
+}
+// 💰 SISTEMA WALLET
+class MobileWallet {
+    constructor() { 
+        this.connected = false; 
+        this.userAddress = null; 
+        this.contract = null; 
+    }
+
+    async connect() {
+        if (typeof window.ethereum === 'undefined') {
+            alert('Please install a Web3 wallet!'); 
+            return false;
+        }
+        try {
+            try { 
+                await window.ethereum.request({ 
+                    method: 'wallet_switchEthereumChain', 
+                    params: [{ chainId: '0x2105' }] 
+                }); 
+            } catch (switchError) { 
+                if (switchError.code === 4902) {
+                    await window.ethereum.request({ 
+                        method: 'wallet_addEthereumChain', 
+                        params: [{
+                            chainId: '0x2105',
+                            chainName: 'Base Mainnet',
+                            rpcUrls: ['https://mainnet.base.org'],
+                            nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
+                            blockExplorerUrls: ['https://basescan.org']
+                        }]
+                    }); 
+                }
+            }
+            
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            this.userAddress = accounts[0]; 
+            this.connected = true;
+            
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer = provider.getSigner();
+            
+            const CONTRACT_ABI = [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"address","name":"sender","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"},{"internalType":"address","name":"owner","type":"address"}],"name":"ERC721IncorrectOwner","type":"error"},{"inputs":[{"internalType":"address","name":"operator","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"ERC721InsufficientApproval","type":"error"},{"inputs":[{"internalType":"address","name":"approver","type":"address"}],"name":"ERC721InvalidApprover","type":"error"},{"inputs":[{"internalType":"address","name":"operator","type":"address"}],"name":"ERC721InvalidOperator","type":"error"},{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"ERC721InvalidOwner","type":"error"},{"inputs":[{"internalType":"address","name":"receiver","type":"address"}],"name":"ERC721InvalidReceiver","type":"error"},{"inputs":[{"internalType":"address","name":"sender","type":"address"}],"name":"ERC721InvalidSender","type":"error"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"ERC721NonexistentToken","type":"error"},{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"OwnableInvalidOwner","type":"error"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"OwnableUnauthorizedAccount","type":"error"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"approved","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"operator","type":"address"},{"indexed":false,"internalType":"bool","name":"approved","type":"bool"}],"name":"ApprovalForAll","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"},{"indexed":true,"internalType":"address","name":"player","type":"address"},{"indexed":false,"internalType":"uint256","name":"score","type":"uint256"},{"indexed":false,"internalType":"string","name":"playerName","type":"string"},{"indexed":false,"internalType":"string","name":"deathScreenshot","type":"string"}],"name":"DeathMinted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"approve","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"deaths","outputs":[{"internalType":"uint256","name":"score","type":"uint256"},{"internalType":"string","name":"playerName","type":"string"},{"internalType":"string","name":"deathScreenshot","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"getApproved","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"operator","type":"address"}],"name":"isApprovedForAll","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_score","type":"uint256"},{"internalType":"string","name":"_playerName","type":"string"},{"internalType":"string","name":"_deathScreenshot","type":"string"}],"name":"mintDeathNFT","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"mintFee","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"ownerOf","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"operator","type":"address"},{"internalType":"bool","name":"approved","type":"bool"}],"name":"setApprovalForAll","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_newFee","type":"uint256"}],"name":"setMintFee","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes4","name":"interfaceId","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"tokenURI","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"transferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"}];
+            
+            this.contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+            this.updateButton(); 
+            return true;
+        } catch (error) { 
+            alert('Connection failed'); 
+            return false; 
+        }
+    }
+
+    updateButton() {
+        const btn = document.getElementById('connectWalletBtn');
+        if (!btn) return;
+        if (this.connected) {
+            const shortAddr = this.userAddress?.substr(0, 6) + '...' + this.userAddress?.substr(-4);
+            btn.innerHTML = `✅ ${shortAddr}`; 
+            btn.classList.add('connected');
+        } else { 
+            btn.innerHTML = '🔗 Connect Wallet'; 
+            btn.classList.remove('connected'); 
+        }
+    }
+}
+
+// 🪙 MINTING FUNCTION
+async function mintScoreNFT() {
+    const mintBtn = document.getElementById('mintScoreBtn');
+    if (!mintBtn) return;
+    if (!window.lastDeathScreenshot) { 
+        alert('No screenshot captured'); 
+        return; 
+    }
+    if (!window.walletConnector?.connected) {
+        const connected = await window.walletConnector.connect();
+        if (!connected) return;
+    }
+    mintBtn.disabled = true; 
+    mintBtn.innerHTML = '⏳ Confirming...';
+    try {
+        const mintFee = ethers.utils.parseEther("0.0002");
+        const tx = await window.walletConnector.contract.mintDeathNFT(
+            score, 
+            currentPlayerName, 
+            window.lastDeathScreenshot, 
+            { value: mintFee }
+        );
+        mintBtn.innerHTML = '⏳ Waiting...'; 
+        await tx.wait();
+        mintBtn.innerHTML = '✅ Minted!'; 
+        mintBtn.style.background = '#7efb8a';
+        setTimeout(() => showLeaderboardScreen(), 2000);
+    } catch (error) {
+        mintBtn.innerHTML = '❌ Failed - Try Again'; 
+        mintBtn.disabled = false;
+    }
+}
+
+// 🏆 LEADERBOARD
+async function loadNFTLeaderboard() {
+    console.log('🏆 Loading leaderboard from contract...');
+    
+    try {
+        const ABI = [
+            "function tokenURI(uint256 tokenId) view returns (string)",
+            "function totalSupply() view returns (uint256)", 
+            "function ownerOf(uint256 tokenId) view returns (address)"
+        ];
+        
+        const provider = new ethers.providers.JsonRpcProvider('https://mainnet.base.org');
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+        
+        const totalSupply = await contract.totalSupply();
+        console.log(`📊 Total NFTs: ${totalSupply.toString()}`);
+        
+        if (totalSupply.eq(0)) {
+            console.log('📭 No NFTs minted yet');
+            return [];
+        }
+        
+        const nftScores = [];
+        const maxTokens = Math.min(totalSupply.toNumber(), 10);
+        
+        for (let tokenId = 1; tokenId <= maxTokens; tokenId++) {
+            try {
+                console.log(`🔍 Processing Token ${tokenId}...`);
+                
+                const tokenURI = await contract.tokenURI(tokenId);
+                const owner = await contract.ownerOf(tokenId);
+                
+                const nftData = await parseTokenURI(tokenURI);
+                
+                if (nftData) {
+                    nftScores.push({
+                        score: nftData.score,
+                        name: nftData.playerName,
+                        player: owner,
+                        timestamp: nftData.timestamp,
+                        tokenId: tokenId
+                    });
+                    console.log(`✅ Added: ${nftData.playerName} - Score: ${nftData.score}`);
+                }
+                
+            } catch (error) {
+                console.log(`❌ Token ${tokenId} error:`, error.message);
+                break;
+            }
+        }
+        
+        console.log(`🎯 Final leaderboard: ${nftScores.length} scores loaded`);
+        return nftScores;
+        
+    } catch (error) {
+        console.error('❌ Leaderboard load failed:', error);
+        return [];
+    }
+}
+
+// 🔍 PARSER DO TOKEN URI
+async function parseTokenURI(tokenURI) {
+    try {
+        const base64Data = tokenURI.replace('data:application/json;base64,', '');
+        const jsonString = atob(base64Data);
+        const metadata = JSON.parse(jsonString);
+        
+        let score = 0;
+        let playerName = 'Anonymous';
+        let timestamp = Math.floor(Date.now() / 1000);
+        
+        if (metadata.attributes && Array.isArray(metadata.attributes)) {
+            metadata.attributes.forEach(attr => {
+                if (attr.trait_type === 'Score') {
+                    score = parseInt(attr.value) || 0;
+                }
+                if (attr.trait_type === 'Player') {
+                    playerName = attr.value || 'Anonymous';
+                }
+                if (attr.trait_type === 'Date') {
+                    timestamp = parseInt(attr.value) || timestamp;
+                }
+            });
+        }
+        
+        return { score, playerName, timestamp };
+        
+    } catch (error) {
+        console.error('❌ Error parsing tokenURI:', error);
+        return null;
+    }
+}
+
+// 🏆 TELA DO LEADERBOARD
+async function showLeaderboardScreen() {
+    document.getElementById('scoresList').innerHTML = `
+        <div class="loading-leaderboard">
+            <div style="font-size: 2rem; margin-bottom: 10px;">⏳</div>
+            Loading leaderboard from blockchain...
+        </div>
+    `;
+    showScreen('leaderboard');
+
+    try {
+        const scores = await loadNFTLeaderboard();
+        
+        if (scores.length === 0) {
+            document.getElementById('scoresList').innerHTML = `
+                <div class="empty-leaderboard">
+                    <div style="font-size: 2.5rem; margin-bottom: 15px;">🐍</div>
+                    No NFT scores yet!<br>
+                    <small>Be the first to mint your epic score!</small>
+                </div>
+            `;
+        } else {
+            const sorted = scores.sort((a, b) => b.score - a.score).slice(0, 10);
+            
+            document.getElementById('scoresList').innerHTML = sorted.map((entry, index) => {
+                const isCurrentScore = entry.score === score && entry.name === currentPlayerName;
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}º`;
+                
+                return `
+                <div class="score-entry ${isCurrentScore ? 'current-score' : ''}">
+                    <span class="rank">${medal}</span>
+                    <div class="player-info">
+                        <div class="player-name">
+                            ${entry.name}
+                            <span class="nft-badge">🪙 NFT</span>
+                        </div>
+                    </div>
+                    <span class="score">${entry.score}</span>
+                    <span class="date">${formatDate(entry.timestamp)}</span>
+                </div>
+                `;
+            }).join('');
+        }
+    } catch (error) {
+        console.error('Leaderboard error:', error);
+        document.getElementById('scoresList').innerHTML = `
+            <div class="error-leaderboard">
+                <div style="font-size: 2rem; margin-bottom: 10px;">❌</div>
+                Error loading leaderboard<br>
+                <small>Please try again later</small>
+            </div>
+        `;
+    }
+}
+
+// 📅 FORMATADOR DE DATA
+function formatDate(timestamp) {
+    const date = new Date(timestamp * 1000);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return '1d ago';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// 🔊 SOUND MANAGER
+class MobileSound {
+    constructor() { 
+        this.audioContext = null; 
+        this.enabled = false; 
+        this.init(); 
+    }
+    
+    init() { 
+        try { 
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)(); 
+            this.enabled = true; 
+        } catch (e) {} 
+    }
+    
+    playTone(freq, duration, type = 'sine', volume = 0.2) {
+        if (!this.enabled) return;
+        try {
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            oscillator.connect(gainNode); 
+            gainNode.connect(this.audioContext.destination);
+            oscillator.frequency.value = freq; 
+            oscillator.type = type;
+            gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+            oscillator.start(); 
+            oscillator.stop(this.audioContext.currentTime + duration);
+        } catch (e) {}
+    }
+    
+    eat() { this.playTone(800, 0.1); setTimeout(() => this.playTone(1200, 0.1), 50); }
+    move() { this.playTone(300, 0.05, 'square', 0.1); }
+    gameOver() { this.playTone(200, 0.3); }
+    start() { this.playTone(600, 0.1); setTimeout(() => this.playTone(800, 0.1), 100); }
+    levelUp() { this.playTone(1000, 0.1); }
+}
+// 🎯 EVENT LISTENERS
+function setupMobileEvents() {
+    // Botões principais
+    document.getElementById('startBtn').addEventListener('click', initGame);
+    document.getElementById('leaderboardBtn').addEventListener('click', showLeaderboardScreen);
+    document.getElementById('rulesBtn').addEventListener('click', () => showScreen('rules'));
+    document.getElementById('restart').addEventListener('click', initGame);
+    document.getElementById('backToMenuBtn').addEventListener('click', () => showScreen('start'));
+    document.getElementById('backFromRules').addEventListener('click', () => showScreen('start'));
+    document.getElementById('connectWalletBtn').addEventListener('click', () => window.walletConnector.connect());
+
+    // 🔥 CONTROLES TOUCH
+    document.querySelector('.btn-up').addEventListener('touchstart', (e) => { 
+        e.preventDefault(); 
+        moveUp(); 
+    });
+    document.querySelector('.btn-left').addEventListener('touchstart', (e) => { 
+        e.preventDefault(); 
+        moveLeft(); 
+    });
+    document.querySelector('.btn-right').addEventListener('touchstart', (e) => { 
+        e.preventDefault(); 
+        moveRight(); 
+    });
+    document.querySelector('.btn-down').addEventListener('touchstart', (e) => { 
+        e.preventDefault(); 
+        moveDown(); 
+    });
+
+    // 🔥 CLIQUE TAMBÉM FUNCIONA (para desktop)
+    document.querySelector('.btn-up').addEventListener('click', (e) => {
+        e.preventDefault();
+        moveUp();
+    });
+    document.querySelector('.btn-left').addEventListener('click', (e) => {
+        e.preventDefault();
+        moveLeft();
+    });
+    document.querySelector('.btn-right').addEventListener('click', (e) => {
+        e.preventDefault();
+        moveRight();
+    });
+    document.querySelector('.btn-down').addEventListener('click', (e) => {
+        e.preventDefault();
+        moveDown();
+    });
+
+    // 🔥 KEYBOARD CONTROLS (para testes no desktop)
+    document.addEventListener('keydown', (e) => {
+        if (!window.running) return;
+        
+        switch(e.key) {
+            case 'ArrowUp': case 'w': case 'W':
+                e.preventDefault();
+                moveUp();
+                break;
+            case 'ArrowDown': case 's': case 'S':
+                e.preventDefault();
+                moveDown();
+                break;
+            case 'ArrowLeft': case 'a': case 'A':
+                e.preventDefault();
+                moveLeft();
+                break;
+            case 'ArrowRight': case 'd': case 'D':
+                e.preventDefault();
+                moveRight();
+                break;
+        }
+    });
+
+    // Ativa áudio no primeiro toque
+    document.addEventListener('touchstart', () => {
+        if (window.soundManager?.audioContext?.state === 'suspended') {
+            window.soundManager.audioContext.resume();
+        }
+    }, { once: true });
+}
+// 🚀 INICIALIZAÇÃO
+function loadEthers() {
+    return new Promise((resolve) => {
+        if (typeof ethers !== 'undefined') { 
+            resolve(); 
+            return; 
+        }
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js';
+        script.onload = () => resolve(); 
+        script.onerror = () => resolve();
+        document.head.appendChild(script);
+    });
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+    // 🔥 NOVO: Avisar ao SDK que o app está pronto
+    try {
+        const sdk = window.farcasterMiniAppSdk;
+        if (sdk && sdk.actions && sdk.actions.ready) {
+            await sdk.actions.ready();
+            console.log('✅ MiniApp SDK está pronto!');
+        }
+    } catch (error) {
+        console.log('ℹ️ SDK não disponível (pode estar em teste local)', error);
+    }
+    
+    await loadEthers();
+    window.walletConnector = new MobileWallet();
+    window.soundManager = new MobileSound();
+    setupMobileEvents();
+    
+    setTimeout(() => { 
+        adjustCanvasSize(); 
+        window.walletConnector.updateButton(); 
+    }, 100);
+    
+    showScreen('start');
+});
+
+window.addEventListener('resize', adjustCanvasSize);
+</script>
+</body>
+</html>
