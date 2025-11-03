@@ -1,8 +1,8 @@
 {
   "accountAssociation": {
     "header": "eyJmaWQiOjAsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHhEQ0Y5REExNDM0YjZCMWM3ZTlFOWM5MEEyMGY2N0JiNjRkMkVjMzc1In0",
-    "payload": "eyJkb21haW4iOiJjb3NtaWNzbmFrZW1pbmlhcHAubmV0bGlmeS5hcHAifQ",
-    "signature": "0xbd1b7279b4f59d1575a04946278088dd63e3899981310913a533ca8c0946af90322685d9d64df38199c0044beeea96c9557dd8460e9fca909b50c49389dbe2661c"
+    "payload": "eyJkb21haW4iOiJjb3NtaWMtc25ha2UtbWluaWFwcC52ZXJjZWwuYXBwIn0",
+    "signature": "0xa0cc3734d1ec84203ce65fbbd9291ddfe23cafe895525dc3ce07a603b41b45fe0758bfa96fd5cbf38b7d32ee8c5079f39c5cbd1ef719d86bed12781ddacf72f71b"
   },
   "baseBuilder": {
     "ownerAddress": "0xDCF9DA1434b6B1c7e9E9c90A20F67Bb64D2Ec375"
@@ -10,9 +10,9 @@
   "miniapp": {
     "version": "1",
     "name": "Cosmic Snake",
-    "homeUrl": "https://cosmicsnakeminiapp.netlify.app",
-    "iconUrl": "https://cosmicsnakeminiapp.netlify.app/icon-512.png",
-    "splashImageUrl": "https://cosmicsnakeminiapp.netlify.app/icon-512.png",
+    "homeUrl": "https://cosmic-snake-miniapp.vercel.app",
+    "iconUrl": "https://cosmic-snake-miniapp.vercel.app/icon-512.png",
+    "splashImageUrl": "https://cosmic-snake-miniapp.vercel.app/icon-512.png",
     "splashBackgroundColor": "#0f2027",
     "subtitle": "Classic Snake on Base Blockchain",
     "description": "Play Cosmic Snake, mint your scores as NFTs, and compete on the leaderboard!",
